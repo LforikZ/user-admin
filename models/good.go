@@ -5,6 +5,7 @@ import (
 	"food-service/infrastructure/db/mysql"
 	"food-service/infrastructure/helper"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -32,6 +33,7 @@ func (Good) TableName() string {
 }
 
 type KeyWords struct {
+	F_id      uint      `json:"id" gorm:"primaryKey;column:F_id"`
 	F_content string    `json:"content" gorm:"column:F_content"`
 	F_user_id string    `json:"user_id" gorm:"column:F_user_id"`
 	F_time    time.Time `json:"time" gorm:"column:F_time"`
@@ -215,11 +217,46 @@ func (g *MGood) GetKeyWorlds(userID string) ([]string, error) {
 	}
 
 	var result []string
-	if err := db.Table(KeyWords{}.TableName()).Where("F_user_id = ?", userID).Order("F_time").Limit(10).Pluck("F_content", &result).Error; err != nil {
+	if err := db.Table(KeyWords{}.TableName()).Where("F_user_id = ?", userID).Order("F_time DESC").Limit(10).Pluck("F_content", &result).Error; err != nil {
 		return nil, errors.Wrap(err, "查询关键词失败")
 	}
 
 	return result, nil
+}
+
+// AddKeyWorld 存储搜索关键字
+func (g *MGood) AddKeyWorld(userID, content string) error {
+	db := mysql.GetDbDefault()
+
+	// 校验用户是否存在
+	var num int64
+	if err := db.Table(User{}.TableName()).Where("F_open_id = ?", userID).Count(&num).Error; err != nil {
+		return errors.Wrap(err, "查询用户信息失败")
+	}
+	if num == 0 {
+		return errors.New("改用户不存在，请登录正确账号")
+	}
+
+	var result KeyWords
+	if err := db.Table(KeyWords{}.TableName()).Where("F_user_id = ? and F_content = ?", userID, content).First(&result).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.Wrap(err, "查询搜索记录失败")
+	}
+	if result.F_id == 0 {
+		if err := db.Table(KeyWords{}.TableName()).Create(&KeyWords{
+			F_content: content,
+			F_user_id: userID,
+			F_time:    time.Now(),
+		}).Error; err != nil {
+			return errors.Wrap(err, "存储搜索记录失败")
+		}
+	} else {
+		result.F_time = time.Now()
+		if err := db.Save(&result).Error; err != nil {
+			return errors.Wrap(err, "更新搜索记录失败")
+		}
+	}
+
+	return nil
 }
 
 // GetGoodDetail 获取商品详情

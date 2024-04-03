@@ -174,6 +174,30 @@ func (u *GoodsController) GetKeyWorlds() {
 	return
 }
 
+type addKeyWorldParam struct {
+	F_user_id        string `form:"user_id" valid:"Required;"`
+	F_search_content string `form:"content" valid:"Required;"`
+}
+
+// AddKeyWorld 存储搜索记录
+func (u *GoodsController) AddKeyWorld() {
+	params := &addKeyWorldParam{}
+	if !u.paramsValid(params) {
+		u.renderParamsError(nil)
+		return
+	}
+
+	var banner *models.MGood
+	err := banner.AddKeyWorld(params.F_user_id, params.F_search_content)
+
+	if err != nil {
+		u.renderUnknownError(err.Error(), nil)
+	}
+
+	u.jsonEchoOk()
+	return
+}
+
 type getGoodDetailParam struct {
 	F_ID int `form:"id" valid:"Required;"`
 }

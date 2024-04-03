@@ -26,7 +26,7 @@ const (
 	myOpenID  = "oSLGA6p9a_8EonTJCfYvwz1GatPw"
 )
 
-// GetGoodDetail 获取商品详情
+// 登录接口
 func (g *MUser) Login(code string) (string, error) {
 	var openId string
 
