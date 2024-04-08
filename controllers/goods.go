@@ -15,7 +15,7 @@ type addGoodParam struct {
 	F_price_module string  `form:"price_module" valid:"Required;"`
 	F_url          string  `form:"url" `
 	F_url_detail   string  `form:"url_detail" `
-	F_tag_id       float32 `form:"tag_id" valid:"Required;"`   // 类别id
+	F_tag_id       int     `form:"tag_id" valid:"Required;"`   // 类别id
 	F_tag_name     string  `form:"tag_name" valid:"Required;"` // 类别名
 	F_store        string  `form:"store"`                      // 存储方式
 	F_area         string  `form:"area"`                       // 商品产地
@@ -49,7 +49,7 @@ type updateGoodParam struct {
 	F_price_module string  `form:"price_module" valid:"Required;"`
 	F_url          string  `form:"url" `
 	F_url_detail   string  `form:"url_detail" `
-	F_tag_id       float32 `form:"tag_id" valid:"Required;"`   // 类别id
+	F_tag_id       int     `form:"tag_id" valid:"Required;"`   // 类别id
 	F_tag_name     string  `form:"tag_name" valid:"Required;"` // 类别名
 	F_store        string  `form:"store"`                      // 存储方式
 	F_area         string  `form:"area"`                       // 商品产地

@@ -19,7 +19,7 @@ type Good struct {
 	F_price_module string    `json:"price_module" gorm:"column:F_price_module"`
 	F_url          string    `json:"url" gorm:"column:F_url"`
 	F_url_detail   string    `json:"url_detail" gorm:"column:F_url_detail"`
-	F_tag_id       float32   `json:"tag_id" gorm:"column:F_tag_id"`         // 类别id
+	F_tag_id       int       `json:"tag_id" gorm:"column:F_tag_id"`         // 类别id
 	F_tag_name     string    `json:"tag_name" gorm:"column:F_tag_name"`     // 类别名
 	F_store        string    `json:"store" gorm:"column:F_store"`           // 存储方式
 	F_area         string    `json:"area" gorm:"column:F_area"`             // 商品产地
@@ -44,7 +44,7 @@ func (KeyWords) TableName() string {
 }
 
 // AddGood 添加商品
-func (g *MGood) AddGood(F_title string, F_num int, F_price float32, F_price_module, F_url, F_url_detail string, F_tag_id float32, F_tag_name, F_store, F_area string, F_shelf_life int) error {
+func (g *MGood) AddGood(F_title string, F_num int, F_price float32, F_price_module, F_url, F_url_detail string, F_tag_id int, F_tag_name, F_store, F_area string, F_shelf_life int) error {
 	db := mysql.GetDbDefault()
 
 	var temp []Good
@@ -92,7 +92,7 @@ func (g *MGood) AddGood(F_title string, F_num int, F_price float32, F_price_modu
 }
 
 // UpdateGood 更新商品
-func (g *MGood) UpdateGood(F_id int, F_title string, F_num int, F_price float32, F_price_module, F_url, F_url_detail string, F_tag_id float32, F_tag_name, F_store, F_area string, F_shelf_life int) error {
+func (g *MGood) UpdateGood(F_id int, F_title string, F_num int, F_price float32, F_price_module, F_url, F_url_detail string, F_tag_id int, F_tag_name, F_store, F_area string, F_shelf_life int) error {
 	db := mysql.GetDbDefault()
 
 	var num int64

@@ -17,6 +17,8 @@ type Cart struct {
 	F_open_id     string    `json:"open_id" gorm:"column:F_open_id"`
 	F_good_id     int       `json:"good_id" gorm:"column:F_good_id"`
 	F_price       float64   `json:"price" gorm:"column:F_price"`
+	F_tag_id      int       `json:"tag_id" gorm:"column:F_tag_id"`
+	F_tag_name    string    `json:"tag_name" gorm:"column:F_tag_name"`
 	F_good_num    int       `json:"good_num" gorm:"column:F_good_num"`
 	F_add_time    time.Time `json:"add_time" gorm:"column:F_add_time"`
 	F_is_checkout int       `json:"is_checkout" gorm:"column:F_is_checkout"`
@@ -102,13 +104,21 @@ func (c *MCart) AddGoodToCart(openId string, goodId, goodNum int, goodPrice floa
 		return errors.Wrap(err, "查询购物车记录失败")
 
 	}
-
 	switch len(midCart) {
 	case 0:
 		//	没有存储记录
 		cart.F_price = float64(goodNum) * goodPrice
 		cart.F_good_num = goodNum
 		cart.F_add_time = time.Now()
+
+		// 补全种类列
+		var good Good
+		if err := tx.Table(Good{}.TableName()).Where("F_id = ?", goodId).First(&good).Error; err != nil {
+			tx.Rollback()
+			return errors.Wrap(err, "查询商品种类失败")
+		}
+		cart.F_tag_id = good.F_tag_id
+		cart.F_tag_name = good.F_tag_name
 		if err := tx.Create(&cart).Error; err != nil {
 			tx.Rollback()
 			return errors.Wrap(err, "加入购物车失败")
