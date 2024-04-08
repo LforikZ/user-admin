@@ -26,7 +26,7 @@ func (g *MExpiration) ExpirationList(F_tag_id, F_flag int) ([]Good, error) {
 	}
 	sql := fmt.Sprintf(`SELECT *
 FROM rb_goods
-WHERE  DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY) %s DATE_ADD(CURDATE(), INTERVAL 1  DAY)  AND F_isdel = 0  %s ;`, flag, tagSql)
+WHERE  DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) %s DATE(DATE_ADD(CURDATE(), INTERVAL 1  DAY))  AND F_isdel = 0  %s ;`, flag, tagSql)
 
 	var result []Good
 	db.Raw(sql).Find(&result)
@@ -47,10 +47,10 @@ func (g *MExpiration) RemoveExpirationFood(F_tag_id, F_flag int) error {
 
 	if F_flag == 0 {
 		// 挑选临期食品
-		tx = tx.Where("DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY) = DATE_ADD(CURDATE(), INTERVAL 1  DAY)")
+		tx = tx.Where("DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) = DATE(DATE_ADD(CURDATE(), INTERVAL 1  DAY))")
 	} else {
 		// 过期产品
-		tx = tx.Where("DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY) < DATE_ADD(CURDATE(), INTERVAL 1  DAY)")
+		tx = tx.Where("DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) < DATE(DATE_ADD(CURDATE(), INTERVAL 1  DAY))")
 	}
 	if err := tx.Table(Good{}.TableName()).Where("F_isdel = 0").Update("F_isdel", 1).Error; err != nil {
 		tx.Rollback()
@@ -71,7 +71,7 @@ func (g *MExpiration) ChangeExpirationPrice(F_id, F_tag_id int, F_number float32
 	if F_tag_id != 0 {
 		tx = tx.Where("F_tag_id = ?", F_tag_id)
 	}
-	tx = tx.Where("DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY) = DATE_ADD(CURDATE(), INTERVAL 1  DAY) AND F_isdel = 0")
+	tx = tx.Where("DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) = DATE(DATE_ADD(CURDATE(), INTERVAL 1  DAY)) AND F_isdel = 0")
 
 	if F_flag == 0 {
 		// 直接修改价格
