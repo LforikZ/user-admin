@@ -49,6 +49,8 @@ func init() {
 	beego.Router("api/cart/del", &controllers.CartController{}, "delete:DelGoodToCart")
 	// 购物车结算
 	beego.Router("api/cart/buy", &controllers.CartController{}, "post:BuyGoods")
+	// 直接购买结算
+	beego.Router("api/cart/direct/buy", &controllers.CartController{}, "post:DirectBuyGood")
 
 	// 获取销售额情况 (单个)
 	beego.Router("api/goods/sale/single", &controllers.CartController{}, "get:SaleSingleTotal")

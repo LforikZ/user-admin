@@ -184,6 +184,36 @@ func (c *MCart) BuyGoods(id, openId string) error {
 	return nil
 }
 
+// 直接购买
+func (c *MCart) DirectBuyGood(openId string, goodID int, price float64, tagID int, tagName string, goodNum int) error {
+	db := mysql.GetDbDefault()
+
+	var muser *MUser
+	num, err := muser.VerifyUserID(openId)
+	if err != nil {
+		return err
+	}
+	if num != 1 {
+		return errors.New("用户信息有误，请联系管理员")
+	}
+	cart := Cart{
+		F_open_id:     openId,
+		F_good_id:     goodID,
+		F_price:       price,
+		F_tag_id:      tagID,
+		F_tag_name:    tagName,
+		F_good_num:    goodNum,
+		F_add_time:    time.Now(),
+		F_is_checkout: 1,
+	}
+
+	if err := db.Table(Cart{}.TableName()).Create(&cart).Error; err != nil {
+		return errors.Wrap(err, "创建购物记录失败")
+	}
+
+	return nil
+}
+
 type saleTagRankResp struct {
 	F_tag_id   int64  `json:"tag_id" gorm:"column:F_id"`
 	F_tag_name string `json:"tag_name" gorm:"column:F_tag_name"`

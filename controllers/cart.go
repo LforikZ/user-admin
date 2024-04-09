@@ -1,7 +1,9 @@
 // @Author Zihao_Li 2024/3/19 13:41:00
 package controllers
 
-import "food-service/models"
+import (
+	"food-service/models"
+)
 
 type CartController struct {
 	BaseController
@@ -96,6 +98,34 @@ func (u *CartController) BuyGoods() {
 
 	var cart *models.MCart
 	err := cart.BuyGoods(params.F_id, params.F_open_id)
+
+	if err != nil {
+		u.renderUnknownError(err.Error(), nil)
+	}
+
+	u.jsonEchoOk()
+	return
+}
+
+type directBuyGoodParam struct {
+	F_open_id  string  `form:"open_id" valid:"Required;"`
+	F_good_id  int     `form:"good_id" valid:"Required;"`
+	F_price    float64 `form:"price" valid:"Required;"`
+	F_tag_id   int     `form:"tag_id" valid:"Required;"`
+	F_tag_name string  `form:"tag_name" valid:"Required;"`
+	F_good_num int     `form:"good_num" valid:"Required;"`
+}
+
+// DirectBuyGood 直接购买结算
+func (u *CartController) DirectBuyGood() {
+	params := &directBuyGoodParam{}
+	if !u.paramsValid(params) {
+		u.renderParamsError(nil)
+		return
+	}
+
+	var cart *models.MCart
+	err := cart.DirectBuyGood(params.F_open_id, params.F_good_id, params.F_price, params.F_tag_id, params.F_tag_name, params.F_good_num)
 
 	if err != nil {
 		u.renderUnknownError(err.Error(), nil)
