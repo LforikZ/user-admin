@@ -180,7 +180,7 @@ func (g *MGood) GetGoodList(page, limit int) ([]Good, error) {
 	limit, page = helper.InitPage(limit, page)
 	offset := helper.PageOffset(limit, page)
 
-	if err := db.Table(Good{}.TableName()).Where("DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY) >= DATE_ADD(CURDATE(), INTERVAL 1  DAY)").Limit(limit).Offset(offset).Find(&result).Error; err != nil {
+	if err := db.Table(Good{}.TableName()).Where("F_num > 0").Where("DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY) >= DATE_ADD(CURDATE(), INTERVAL 1  DAY)").Limit(limit).Offset(offset).Find(&result).Error; err != nil {
 		return nil, errors.New("内部查询失败，请联系管理员")
 
 	}

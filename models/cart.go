@@ -187,7 +187,6 @@ func (c *MCart) BuyGoods(id, openId string) error {
 // 直接购买
 func (c *MCart) DirectBuyGood(openId string, goodID int, price float64, tagID int, tagName string, goodNum int) error {
 	db := mysql.GetDbDefault()
-
 	var muser *MUser
 	num, err := muser.VerifyUserID(openId)
 	if err != nil {
@@ -196,6 +195,18 @@ func (c *MCart) DirectBuyGood(openId string, goodID int, price float64, tagID in
 	if num != 1 {
 		return errors.New("用户信息有误，请联系管理员")
 	}
+
+	tx := db.Begin()
+	var tableGoodNum int
+	if err := tx.Table(Good{}.TableName()).Where("F_id = ?", goodID).Pluck("F_num", &tableGoodNum).Error; err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "查询商品库存数量失败")
+	}
+	if goodNum > tableGoodNum {
+		tx.Rollback()
+		return errors.New("商品库存数量不足")
+	}
+
 	cart := Cart{
 		F_open_id:     openId,
 		F_good_id:     goodID,
@@ -207,10 +218,17 @@ func (c *MCart) DirectBuyGood(openId string, goodID int, price float64, tagID in
 		F_is_checkout: 1,
 	}
 
-	if err := db.Table(Cart{}.TableName()).Create(&cart).Error; err != nil {
+	if err := tx.Table(Cart{}.TableName()).Create(&cart).Error; err != nil {
+		tx.Rollback()
 		return errors.Wrap(err, "创建购物记录失败")
 	}
 
+	if err := tx.Table(Good{}.TableName()).Where("F_id = ?", goodID).Update("F_num", tableGoodNum-goodNum).Error; err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "更新商品数量失败")
+	}
+
+	tx.Commit()
 	return nil
 }
 

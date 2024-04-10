@@ -28,6 +28,8 @@ func init() {
 	beego.Router("api/goods", &controllers.GoodsController{}, "get:GetGoodList")
 	// 商品详情
 	beego.Router("api/goods/details", &controllers.GoodsController{}, "get:GetGoodDetail")
+	//// 商品是否允许增加
+	//beego.Router("api/goods/isAllowChange", &controllers.GoodsController{}, "post:IsAllowChange")
 
 	// 商品模糊搜索列表
 	beego.Router("api/goods/search", &controllers.GoodsController{}, "get:GetFuzzSearchGoodList")
