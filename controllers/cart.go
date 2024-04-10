@@ -84,7 +84,7 @@ func (u *CartController) DelGoodToCart() {
 }
 
 type buyGoodsParam struct {
-	F_id      string `form:"id" valid:"Required;"`
+	F_cart_id string `form:"cart_id" valid:"Required;"` // 购物车id
 	F_open_id string `form:"open_id" valid:"Required;"`
 }
 
@@ -97,9 +97,12 @@ func (u *CartController) BuyGoods() {
 	}
 
 	var cart *models.MCart
-	err := cart.BuyGoods(params.F_id, params.F_open_id)
+	errIdList, err := cart.BuyGoods(params.F_cart_id, params.F_open_id)
 
 	if err != nil {
+		if len(errIdList) != 0 {
+			u.renderSuccessJSON1(errIdList, err.Error())
+		}
 		u.renderUnknownError(err.Error(), nil)
 	}
 

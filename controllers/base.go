@@ -113,6 +113,11 @@ func (c *BaseController) renderSuccessJSON(data interface{}) {
 	c.renderJSON(resp.RESP_OK, "ok", data)
 }
 
+// 成功渲染函数
+func (c *BaseController) renderSuccessJSON1(data interface{}, msg string) {
+	c.renderJSON(resp.RESP_OK, msg, data)
+}
+
 // 参数错误
 func (c *BaseController) renderParamsError(data interface{}) {
 	c.renderJSON(resp.RESP_PARAM_ERR, "参数错误", data)

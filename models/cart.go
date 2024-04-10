@@ -164,24 +164,60 @@ func (c *MCart) DelGoodToCart(id int) error {
 	return nil
 }
 
-func (c *MCart) BuyGoods(id, openId string) error {
+func (c *MCart) BuyGoods(cartIds, openId string) ([]int, error) {
 	db := mysql.GetDbDefault()
+	tx := db.Begin()
 
-	goodStrList := strings.Split(id, ",")
+	cartStrList := strings.Split(cartIds, ",")
 
-	if len(goodStrList) != 0 {
-		goodIntList, err := helper.ConvertStringSliceToIntSlice(goodStrList)
-		if err != nil {
-			return err
-		}
-		db = db.Where("F_good_id in (?)", goodIntList)
-
-	}
-	if err := db.Table(Cart{}.TableName()).Where("F_open_id = ? and F_isdel = 0 ", openId).Update("F_is_checkout", 1).Error; err != nil {
-		return errors.Wrap(err, "更新购物车状态失败")
+	cartIntList, err := helper.ConvertStringSliceToIntSlice(cartStrList)
+	if err != nil {
+		tx.Rollback()
+		return []int{}, err
 	}
 
-	return nil
+	// 查询购物车数量是否有误
+	sql := `select c.F_id
+from rb_cart c
+         join rb_goods g on c.F_good_id = g.F_id
+where c.F_open_id = ?
+  and c.F_id in (?)
+  and c.F_is_checkout = 0
+  and c.F_good_num > g.F_num
+  and c.F_isdel = 0
+  and g.F_isdel = 0;`
+
+	var idList []int
+	if err := tx.Raw(sql, openId, cartIntList).Scan(&idList).Error; err != nil {
+		tx.Rollback()
+		return []int{}, errors.Wrap(err, "查询购物车数量比库存多语句失败")
+	}
+	if len(idList) > 0 {
+		tx.Rollback()
+		return idList, errors.New("存在购物车数量比库存多的商品")
+	}
+
+	sql = `UPDATE rb_goods g
+JOIN rb_cart c ON c.F_good_id = g.F_id
+SET g.F_num = g.F_num - c.F_good_num
+WHERE c.F_open_id = ?
+  AND c.F_id IN (?)
+  AND c.F_is_checkout = 0
+  AND c.F_good_num <= g.F_num
+  AND c.F_isdel = 0
+  AND g.F_isdel = 0;`
+	if err := tx.Exec(sql, openId, cartIntList).Error; err != nil {
+		tx.Rollback()
+		return []int{}, errors.Wrap(err, "更新库存失败")
+	}
+
+	if err := tx.Table(Cart{}.TableName()).Where("F_id in (?) and F_open_id = ? and F_isdel = 0 ", cartIntList, openId).Update("F_is_checkout", 1).Error; err != nil {
+		tx.Rollback()
+		return []int{}, errors.Wrap(err, "更新购物车状态失败")
+	}
+
+	tx.Commit()
+	return []int{}, nil
 }
 
 // 直接购买
