@@ -48,7 +48,7 @@ func init() {
 	// 购物车查询
 	beego.Router("api/cart/get", &controllers.CartController{}, "get:GetCartList")
 	// 删除购物车
-	beego.Router("api/cart/del", &controllers.CartController{}, "delete:DelGoodToCart")
+	beego.Router("api/cart/del", &controllers.CartController{}, "put:DelGoodToCart")
 	// 购物车结算
 	beego.Router("api/cart/buy", &controllers.CartController{}, "post:BuyGoods")
 	// 直接购买结算

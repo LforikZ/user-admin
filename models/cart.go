@@ -30,12 +30,13 @@ func (Cart) TableName() string {
 }
 
 type GetCartListResp struct {
+	F_cart_id      int     `json:"cart_id" gorm:"column:F_cart_id"`
 	F_title        string  `json:"title" gorm:"column:F_title"`
 	F_price        float32 `json:"price" gorm:"column:F_price"`
 	F_price_module string  `json:"price_module" gorm:"column:F_price_module"`
 	F_url          string  `json:"url" gorm:"column:F_url"`
 	F_open_id      string  `json:"open_id" gorm:"column:F_open_id"`
-	F_good_id      int     `json:"id" gorm:"column:F_good_id"`
+	F_good_id      int     `json:"good_id" gorm:"column:F_good_id"`
 	F_good_num     int     `json:"good_num" gorm:"column:F_good_num"`
 }
 
@@ -55,7 +56,7 @@ func (c *MCart) GetCartList(openId string) ([]GetCartListResp, error) {
 
 	// 获取结果
 	var result []GetCartListResp
-	db.Raw(`SELECT *
+	db.Raw(`SELECT rb_cart.F_id as F_cart_id,F_title,rb_cart.F_price as F_price,F_price_module,F_url,F_open_id,F_good_id,F_good_num
 FROM rb_cart
 JOIN rb_goods ON rb_cart.F_good_id = rb_goods.F_id
 WHERE rb_cart.F_open_id = ?
@@ -93,13 +94,8 @@ func (c *MCart) AddGoodToCart(openId string, goodId, goodNum int, goodPrice floa
 	tx := db.Begin()
 
 	var midCart []Cart
-	cart := Cart{
-		F_open_id:     openId,
-		F_good_id:     goodId,
-		F_is_checkout: 0,
-		F_isdel:       0,
-	}
-	if err := tx.Where(cart).Find(&midCart).Error; err != nil {
+
+	if err := tx.Table(Cart{}.TableName()).Where("F_open_id = ? and F_good_id = ? and F_is_checkout = 0 and F_isdel = 0", openId, goodId).Find(&midCart).Error; err != nil {
 		tx.Rollback()
 		return errors.Wrap(err, "查询购物车记录失败")
 
@@ -107,9 +103,15 @@ func (c *MCart) AddGoodToCart(openId string, goodId, goodNum int, goodPrice floa
 	switch len(midCart) {
 	case 0:
 		//	没有存储记录
-		cart.F_price = float64(goodNum) * goodPrice
-		cart.F_good_num = goodNum
-		cart.F_add_time = time.Now()
+		cart := &Cart{
+			F_open_id:     openId,
+			F_good_id:     goodId,
+			F_price:       float64(goodNum) * goodPrice,
+			F_good_num:    goodNum,
+			F_add_time:    time.Now(),
+			F_is_checkout: 0,
+			F_isdel:       0,
+		}
 
 		// 补全种类列
 		var good Good
@@ -117,6 +119,11 @@ func (c *MCart) AddGoodToCart(openId string, goodId, goodNum int, goodPrice floa
 			tx.Rollback()
 			return errors.Wrap(err, "查询商品种类失败")
 		}
+		if good.F_num < goodNum {
+			tx.Rollback()
+			return errors.New("库存数量不足")
+		}
+
 		cart.F_tag_id = good.F_tag_id
 		cart.F_tag_name = good.F_tag_name
 		if err := tx.Create(&cart).Error; err != nil {

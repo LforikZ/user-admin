@@ -64,7 +64,7 @@ type delGoodToCartParam struct {
 	F_id int `form:"id" valid:"Required;"`
 }
 
-// DelGoodToCart 删除购物车
+// DelGoodToCart 删除单个购物车商品
 func (u *CartController) DelGoodToCart() {
 	params := &delGoodToCartParam{}
 	if !u.paramsValid(params) {
