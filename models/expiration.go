@@ -60,7 +60,7 @@ func (g *MExpiration) AdjustmentExpirationFood(F_tag_id, F_food_tag, F_state_tag
 			return errors.Wrap(err, "下架商品失败")
 		}
 	} else {
-		if err := tx.Table(Good{}.TableName()).Where("F_isdel = 1").Updates(map[string]interface{}{"F_sale_time": time.Now(), "F_isdel": 0}).Error; err != nil {
+		if err := tx.Table(Good{}.TableName()).Updates(map[string]interface{}{"F_sale_time": time.Now(), "F_isdel": 0}).Error; err != nil {
 			tx.Rollback()
 			return errors.Wrap(err, "上架商品失败")
 		}
