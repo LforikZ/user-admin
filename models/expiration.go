@@ -6,6 +6,7 @@ import (
 	"food-service/infrastructure/db/mysql"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"time"
 )
 
 type MExpiration struct{}
@@ -35,8 +36,8 @@ WHERE  DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) %s DATE(DATE_ADD(
 
 }
 
-// RemoveExpirationFood 批量下架临期或过期食品
-func (g *MExpiration) RemoveExpirationFood(F_tag_id, F_flag int) error {
+// AdjustmentExpirationFood 批量上架或者下架临期或过期食品
+func (g *MExpiration) AdjustmentExpirationFood(F_tag_id, F_food_tag, F_state_tag int) error {
 	db := mysql.GetDbDefault()
 
 	tx := db.Begin()
@@ -45,17 +46,26 @@ func (g *MExpiration) RemoveExpirationFood(F_tag_id, F_flag int) error {
 		tx = tx.Where("F_tag_id = ?", F_tag_id)
 	}
 
-	if F_flag == 0 {
+	if F_food_tag == 0 {
 		// 挑选临期食品
 		tx = tx.Where("DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) = DATE(DATE_ADD(CURDATE(), INTERVAL 1  DAY))")
 	} else {
 		// 过期产品
 		tx = tx.Where("DATE(DATE_ADD(F_sale_time, INTERVAL F_shelf_life  DAY)) < DATE(DATE_ADD(CURDATE(), INTERVAL 1  DAY))")
 	}
-	if err := tx.Table(Good{}.TableName()).Where("F_isdel = 0").Update("F_isdel", 1).Error; err != nil {
-		tx.Rollback()
-		return errors.Wrap(err, "下架商品失败")
+
+	if F_state_tag == 0 {
+		if err := tx.Table(Good{}.TableName()).Where("F_isdel = 0").Update("F_isdel", 1).Error; err != nil {
+			tx.Rollback()
+			return errors.Wrap(err, "下架商品失败")
+		}
+	} else {
+		if err := tx.Table(Good{}.TableName()).Where("F_isdel = 1").Updates(map[string]interface{}{"F_sale_time": time.Now(), "F_isdel": 0}).Error; err != nil {
+			tx.Rollback()
+			return errors.Wrap(err, "上架商品失败")
+		}
 	}
+
 	tx.Commit()
 	return nil
 }

@@ -33,16 +33,22 @@ func (e *ExpirationController) ExpirationList() {
 	return
 }
 
-// RemoveExpirationFood 批量下架临期或过期食品
-func (e *ExpirationController) RemoveExpirationFood() {
-	params := &expirationListParam{}
+type removeExpirationFoodParam struct {
+	F_tag_id    int `form:"tag_id"`
+	F_food_tag  int `form:"food_tag"`  // 0表示临期食品 1表示过期食品
+	F_state_tag int `form:"state_tag"` // 0表示下架商品，1表示上架商品
+}
+
+// RemoveExpirationFood 批量上架或者下架临期或过期食品
+func (e *ExpirationController) AdjustmentExpirationFood() {
+	params := &removeExpirationFoodParam{}
 	if !e.paramsValid(params) {
 		e.renderParamsError(nil)
 		return
 	}
 
 	var expiration *models.MExpiration
-	err := expiration.RemoveExpirationFood(params.F_tag_id, params.F_flag)
+	err := expiration.AdjustmentExpirationFood(params.F_tag_id, params.F_food_tag, params.F_state_tag)
 
 	if err != nil {
 		e.renderUnknownError(err.Error(), nil)

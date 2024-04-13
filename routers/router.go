@@ -66,8 +66,8 @@ func init() {
 	// 获取临期或过期食品列表
 	beego.Router("api/expiration/list", &controllers.ExpirationController{}, "get:ExpirationList")
 
-	// 批量下架临期或过期食品
-	beego.Router("api/expiration/remove", &controllers.ExpirationController{}, "put:RemoveExpirationFood")
+	// 批量上架或者下架，临期或过期食品
+	beego.Router("api/expiration/adjust", &controllers.ExpirationController{}, "put:AdjustmentExpirationFood")
 	// 批量调整临期食品价格
 	beego.Router("api/expiration/change/price", &controllers.ExpirationController{}, "post:ChangeExpirationPrice")
 
