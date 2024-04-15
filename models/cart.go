@@ -419,7 +419,11 @@ func (c *MCart) SaleListTotal(timeRange string) ([]saleListTotalResp, error) {
 	}
 	var result []saleListTotalResp
 
-	if err := db.Table(Cart{}.TableName()).Select("F_tag_id, F_tag_name, SUM(F_price) as F_total").Where("F_add_time BETWEEN ? and ?  AND F_is_checkout = 1 AND F_isdel = 0", timeSlice[0], afterDay).Group("F_tag_id, F_tag_name").Find(&result).Error; err != nil {
+	if err := db.Table(Category{}.TableName()).
+		Select("rb_category.F_id AS F_tag_id, rb_category.F_name AS F_tag_name, COALESCE(SUM(Cart.F_price), 0) AS F_total").
+		Joins("LEFT JOIN rb_cart Cart ON rb_category.F_id = Cart.F_tag_id AND Cart.F_add_time BETWEEN ? AND ?  AND Cart.F_is_checkout = 1 AND Cart.F_isdel = 0", timeSlice[0], afterDay).
+		Group("rb_category.F_id, rb_category.F_name").
+		Find(&result).Error; err != nil {
 		return nil, err
 	}
 
